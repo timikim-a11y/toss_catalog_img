@@ -1,0 +1,37 @@
+name: Convert catalog images
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # 매일 09:00 (한국 시간), 실제 실행은 몇 분~수십 분 늦을 수 있음
+  workflow_dispatch:      # Actions 탭에서 수동 실행
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install packages
+        run: pip install pillow==10.4.0 requests==2.32.3
+
+      - name: Convert images
+        run: python scripts/convert_images.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add auto
+          if git diff --cached --quiet; then
+            echo "변경 없음"
+          else
+            git commit -m "auto: 카탈로그 이미지 갱신"
+            git push
+          fi
